@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskBlaster.TaskManagement.API.Services.Interfaces;
 using TaskBlaster.TaskManagement.Models.Dtos;
 using TaskBlaster.TaskManagement.Models.InputModels;
 
@@ -8,16 +9,17 @@ namespace TaskBlaster.TaskManagement.API.Controllers;
 [Authorize]
 [Route("[controller]")]
 [ApiController]
-public class TagsController : ControllerBase
+public class TagsController(ITagService tagService) : ControllerBase
 {
     /// <summary>
     /// Gets all tags
     /// </summary>
     /// <returns>A list of all tags</returns>
     [HttpGet("")]
-    public Task<ActionResult<IEnumerable<TagDto>>> GetAllTags()
+    public async Task<ActionResult<IEnumerable<TagDto>>> GetAllTags()
     {
-        throw new NotImplementedException();
+        var tags = await tagService.GetAllTagsAsync();
+        return Ok(tags);
     }
 
     /// <summary>
@@ -25,8 +27,9 @@ public class TagsController : ControllerBase
     /// </summary>
     /// <param name="inputModel">An input model used to populate the new tag</param>
     [HttpPost("")]
-    public Task<ActionResult> CreateNewTag([FromBody] TagInputModel inputModel)
+    public async Task<ActionResult> CreateNewTag([FromBody] TagInputModel inputModel)
     {
-        throw new NotImplementedException();
+        var newId = await tagService.CreateNewTagAsync(inputModel);
+        return Created(string.Empty, new { id = newId });
     }
 }

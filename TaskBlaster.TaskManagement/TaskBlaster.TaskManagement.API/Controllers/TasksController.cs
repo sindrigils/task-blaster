@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskBlaster.TaskManagement.API.Services.Interfaces;
 using TaskBlaster.TaskManagement.Models;
 using TaskBlaster.TaskManagement.Models.Dtos;
 using TaskBlaster.TaskManagement.Models.InputModels;
@@ -9,7 +10,7 @@ namespace TaskBlaster.TaskManagement.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("[controller]")]
-public class TasksController : ControllerBase
+public class TasksController(ITaskService taskService, ICommentService commentService) : ControllerBase
 {
     /// <summary>
     /// Returns all tasks by a provided criteria as a paginated result
@@ -17,9 +18,10 @@ public class TasksController : ControllerBase
     /// <param name="query">A query which is used to paginate and filter the result</param>
     /// <returns>A filtered and paginated list of tasks</returns>
     [HttpGet("")]
-    public Task<ActionResult<Envelope<TaskDto>>> GetPaginatedTasksByCriteria([FromQuery] TaskCriteriaQueryParams query)
+    public async Task<ActionResult<Envelope<TaskDto>>> GetPaginatedTasksByCriteria([FromQuery] TaskCriteriaQueryParams query)
     {
-        throw new NotImplementedException();
+        var tasks = await taskService.GetPaginatedTasksByCriteriaAsync(query);
+        return Ok(tasks);
     }
 
     /// <summary>
@@ -28,9 +30,10 @@ public class TasksController : ControllerBase
     /// <param name="taskId">The id of the task</param>
     /// <returns>A single task or null</returns>
     [HttpGet("{taskId}", Name = "GetTaskById")]
-    public Task<ActionResult<TaskDetailsDto?>> GetTaskById(int taskId)
+    public async Task<ActionResult<TaskDetailsDto?>> GetTaskById(int taskId)
     {
-        throw new NotImplementedException();
+        var task = await taskService.GetTaskByIdAsync(taskId);
+        return Ok(task);
     }
 
     /// <summary>
@@ -38,19 +41,21 @@ public class TasksController : ControllerBase
     /// </summary>
     /// <param name="task">Input model used to populate the new task</param>
     [HttpPost("")]
-    public Task<ActionResult> CreateNewTask([FromBody] TaskInputModel task)
+    public async Task<ActionResult> CreateNewTask([FromBody] TaskInputModel task)
     {
-        throw new NotImplementedException();
+        var newId = await taskService.CreateNewTaskAsync(task);
+        return CreatedAtRoute("GetTaskById", new { id = newId }, null);
     }
-    
+
     /// <summary>
     /// Archives a task by id
     /// </summary>
     /// <param name="taskId">The id of the task which should be archived</param>
     [HttpDelete("{taskId}")]
-    public Task<ActionResult> ArchiveTaskById(int taskId)
+    public async Task<ActionResult> ArchiveTaskById(int taskId)
     {
-        throw new NotImplementedException();
+        await taskService.ArchiveTaskByIdAsync(taskId);
+        return Ok();
     }
 
     /// <summary>
@@ -59,20 +64,22 @@ public class TasksController : ControllerBase
     /// <param name="taskId">The id of the task</param>
     /// <param name="userId">The id of the user which should be assigned</param>
     [HttpPatch("{taskId}/assign/{userId}")]
-    public Task<ActionResult> AssignUserToTask(int taskId, int userId)
+    public async Task<ActionResult> AssignUserToTask(int taskId, int userId)
     {
-        throw new NotImplementedException();
+        await taskService.AssignUserToTaskAsync(taskId, userId);
+        return NoContent();
     }
-    
+
     /// <summary>
     /// Unassigns a user from a task by id
     /// </summary>
     /// <param name="taskId">The id of the task</param>
     /// <param name="userId">The id of the user which should be unassigned</param>
     [HttpPatch("{taskId}/unassign/{userId}")]
-    public Task<ActionResult> UnassignUserFromTask(int taskId, int userId)
+    public async Task<ActionResult> UnassignUserFromTask(int taskId, int userId)
     {
-        throw new NotImplementedException();
+        await taskService.UnassignUserFromTaskAsync(taskId, userId);
+        return NoContent();
     }
 
     /// <summary>
@@ -81,20 +88,22 @@ public class TasksController : ControllerBase
     /// <param name="taskId">The id of the task</param>
     /// <param name="inputModel">The input model associated with the status update</param>
     [HttpPatch("{taskId}/status")]
-    public Task<ActionResult> UpdateTaskStatus(int taskId, [FromBody] StatusInputModel inputModel)
+    public async Task<ActionResult> UpdateTaskStatus(int taskId, [FromBody] StatusInputModel inputModel)
     {
-        throw new NotImplementedException();
+        await taskService.UpdateTaskStatusAsync(taskId, inputModel);
+        return NoContent();
     }
-    
+
     /// <summary>
     /// Updates the priority of a task, e.g. 'Critical', 'High'
     /// </summary>
     /// <param name="taskId">The id of the task</param>
     /// <param name="inputModel">The input model associated with the priority update</param>
     [HttpPatch("{taskId}/priority")]
-    public Task<ActionResult> UpdateTaskPriority(int taskId, [FromBody] PriorityInputModel inputModel)
+    public async Task<ActionResult> UpdateTaskPriority(int taskId, [FromBody] PriorityInputModel inputModel)
     {
-        throw new NotImplementedException();
+        await taskService.UpdateTaskPriorityAsync(taskId, inputModel);
+        return NoContent();
     }
 
     /// <summary>
@@ -103,9 +112,10 @@ public class TasksController : ControllerBase
     /// <param name="taskId">The id of the task</param>
     /// <returns>A list of comments</returns>
     [HttpGet("{taskId}/comments")]
-    public Task<ActionResult> GetCommentsAssociatedWithTask(int taskId)
+    public async Task<ActionResult> GetCommentsAssociatedWithTask(int taskId)
     {
-        throw new NotImplementedException();
+        var comments = await commentService.GetCommentsAssociatedWithTaskAsync(taskId);
+        return Ok(comments);
     }
 
     /// <summary>
@@ -114,19 +124,21 @@ public class TasksController : ControllerBase
     /// <param name="taskId">The id of the task</param>
     /// <param name="inputModel">The input model for the comment</param>
     [HttpPost("{taskId}/comments")]
-    public Task<ActionResult> AddCommentToTask(int taskId, [FromBody] CommentInputModel inputModel)
+    public async Task<ActionResult> AddCommentToTask(int taskId, [FromBody] CommentInputModel inputModel)
     {
-        throw new NotImplementedException();
+        await commentService.AddCommentToTaskAsync(taskId, "USER???????", inputModel);
+        return Created();
     }
-    
+
     /// <summary>
     /// Removes a comment from a task
     /// </summary>
     /// <param name="taskId">The id of the task</param>
     /// <param name="commentId">The id of the comment</param>
     [HttpDelete("{taskId}/comments/{commentId}")]
-    public Task<ActionResult> RemoveCommentFromTask(int taskId, int commentId)
+    public async Task<ActionResult> RemoveCommentFromTask(int taskId, int commentId)
     {
-        throw new NotImplementedException();
+        await commentService.RemoveCommentFromTaskAsync(taskId, commentId);
+        return NoContent();
     }
 }

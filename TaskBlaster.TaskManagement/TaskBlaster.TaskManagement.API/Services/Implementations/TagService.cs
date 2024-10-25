@@ -11,7 +11,7 @@ public class TagService : ITagService
         throw new NotImplementedException();
     }
 
-    public Task CreateNewTagAsync(TagInputModel inputModel)
+    public Task<int> CreateNewTagAsync(TagInputModel inputModel)
     {
         throw new NotImplementedException();
     }
