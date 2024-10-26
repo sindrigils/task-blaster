@@ -23,4 +23,5 @@ public interface ITaskRepository
     Task UpdateTaskPriorityAsync(int taskId, PriorityInputModel inputModel);
     Task<IEnumerable<TaskWithNotificationDto>> GetTasksForNotifications();
     Task UpdateTaskNotifications();
+    Task<bool> DoesTaskExistAsync(int taskId);
 }

@@ -11,6 +11,7 @@ public class TaskDetailsDto
     public DateTime? DueDate { get; set; }
     public string CreatedBy { get; set; } = "";
     public string? AssignedToUser { get; set; }
+    // TODO MEIKAR ÞETTA SENSE STRING??
     public List<string> Tags { get; set; } = [];
     public List<CommentDto> Comments { get; set; } = [];
 }

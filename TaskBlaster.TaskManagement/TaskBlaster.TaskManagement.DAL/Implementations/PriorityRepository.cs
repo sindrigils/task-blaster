@@ -1,12 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using TaskBlaster.TaskManagement.DAL.Data;
 using TaskBlaster.TaskManagement.DAL.Interfaces;
 using TaskBlaster.TaskManagement.Models.Dtos;
 
 namespace TaskBlaster.TaskManagement.DAL.Implementations;
 
-public class PriorityRepository : IPriorityRepository
+public class PriorityRepository(TaskBlasterDbContext dbContext) : IPriorityRepository
 {
-    public Task<IEnumerable<PriorityDto>> GetAllPrioritiesAsync()
+    private readonly TaskBlasterDbContext _dbContext = dbContext;
+    public async Task<IEnumerable<PriorityDto>> GetAllPrioritiesAsync()
     {
-        throw new NotImplementedException();
+        return await _dbContext.Priorities.Select(p => new PriorityDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Description = p.Description
+        }).ToListAsync();
     }
+
 }

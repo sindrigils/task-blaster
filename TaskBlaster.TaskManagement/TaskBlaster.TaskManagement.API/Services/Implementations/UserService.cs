@@ -5,20 +5,15 @@ using TaskBlaster.TaskManagement.Models.InputModels;
 
 namespace TaskBlaster.TaskManagement.API.Services.Implementations;
 
-public class UserService : IUserService
+public class UserService(IUserRepository userRepository) : IUserService
 {
-    public Task CreateUserIfNotExistsAsync(UserInputModel inputModel)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task CreateUserIfNotExistsAsync(UserInputModel inputModel) => await userRepository.CreateUserIfNotExists(inputModel);
 
-    public Task<IEnumerable<UserDto>> GetAllUsersAsync()
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<IEnumerable<UserDto>> GetAllUsersAsync() => await userRepository.GetAllUsers();
 
-    public Task<UserDto?> GetUserByIdAsync(int userId)
+    public async Task<UserDto?> GetUserByIdAsync(int userId)
     {
-        throw new NotImplementedException();
+        ArgumentOutOfRangeException.ThrowIfLessThan(userId, 1);
+        return await userRepository.GetUserByIdAsync(userId);
     }
 }

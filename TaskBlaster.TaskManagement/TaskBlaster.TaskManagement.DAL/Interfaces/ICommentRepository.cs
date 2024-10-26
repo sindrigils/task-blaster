@@ -6,8 +6,9 @@ namespace TaskBlaster.TaskManagement.DAL.Interfaces;
 public interface ICommentRepository
 {
     Task<IEnumerable<CommentDto>> GetCommentsAssociatedWithTaskAsync(int taskId);
-    
+
     Task AddCommentToTaskAsync(int taskId, string user, CommentInputModel comment);
-    
+
     Task RemoveCommentFromTaskAsync(int taskId, int commentId);
+    Task<bool> DoesCommentExistAsync(int commentId);
 }
