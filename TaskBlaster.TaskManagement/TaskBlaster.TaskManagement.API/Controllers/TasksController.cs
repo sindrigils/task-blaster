@@ -44,7 +44,7 @@ public class TasksController(ITaskService taskService, ICommentService commentSe
     public async Task<ActionResult> CreateNewTask([FromBody] TaskInputModel task)
     {
         var newId = await taskService.CreateNewTaskAsync(task);
-        return CreatedAtRoute("GetTaskById", new { id = newId }, null);
+        return CreatedAtRoute("GetTaskById", new { taskId = newId }, new { id = newId });
     }
 
     /// <summary>

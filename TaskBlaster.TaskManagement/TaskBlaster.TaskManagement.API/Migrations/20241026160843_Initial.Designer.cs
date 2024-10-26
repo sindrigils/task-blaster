@@ -12,7 +12,7 @@ using TaskBlaster.TaskManagement.DAL.Data;
 namespace TaskBlaster.TaskManagement.API.Migrations
 {
     [DbContext(typeof(TaskBlasterDbContext))]
-    [Migration("20241025175353_Initial")]
+    [Migration("20241026160843_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -122,7 +122,7 @@ namespace TaskBlaster.TaskManagement.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssignedToId")
+                    b.Property<int?>("AssignedToId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
@@ -136,6 +136,9 @@ namespace TaskBlaster.TaskManagement.API.Migrations
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("PriorityId")
                         .HasColumnType("integer");
@@ -246,8 +249,7 @@ namespace TaskBlaster.TaskManagement.API.Migrations
                     b.HasOne("TaskBlaster.TaskManagement.DAL.Entities.User", "AssignedTo")
                         .WithMany("AssignedTasks")
                         .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TaskBlaster.TaskManagement.DAL.Entities.User", "CreatedBy")
                         .WithMany("CreatedTasks")

@@ -5,4 +5,5 @@ namespace TaskBlaster.TaskManagement.DAL.Interfaces;
 public interface IPriorityRepository
 {
     Task<IEnumerable<PriorityDto>> GetAllPrioritiesAsync();
+    Task<bool> DoesPriorityExistAsync(int id);
 }

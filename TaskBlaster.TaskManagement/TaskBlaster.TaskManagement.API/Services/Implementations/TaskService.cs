@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using TaskBlaster.TaskManagement.API.Services.Interfaces;
 using TaskBlaster.TaskManagement.DAL.Interfaces;
 using TaskBlaster.TaskManagement.Models;
@@ -7,28 +8,62 @@ using TaskBlaster.TaskManagement.Models.InputModels;
 
 namespace TaskBlaster.TaskManagement.API.Services.Implementations;
 
-public class TaskService(ITaskRepository taskRepository, IUserRepository userRepository) : ITaskService
+public class TaskService : ITaskService
 {
-    public async Task<Envelope<TaskDto>> GetPaginatedTasksByCriteriaAsync(TaskCriteriaQueryParams query) => await taskRepository.GetPaginatedTasksByCriteriaAsync(query);
+
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IStatusRepository _statusRepository;
+    private readonly IPriorityRepository _priorityRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public TaskService(ITaskRepository taskRepository, IUserRepository userRepository, IStatusRepository statusRepository, IPriorityRepository priorityRepository, IHttpContextAccessor httpContextAccessor)
+    {
+        _taskRepository = taskRepository;
+        _userRepository = userRepository;
+        _statusRepository = statusRepository;
+        _priorityRepository = priorityRepository;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public async Task<Envelope<TaskDto>> GetPaginatedTasksByCriteriaAsync(TaskCriteriaQueryParams query) => await _taskRepository.GetPaginatedTasksByCriteriaAsync(query);
 
     public async Task<TaskDetailsDto?> GetTaskByIdAsync(int taskId)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
-        var task = await taskRepository.GetTaskByIdAsync(taskId) ?? throw new ResourceNotFoundException($"No task with id {taskId} found");
+        var task = await _taskRepository.GetTaskByIdAsync(taskId) ?? throw new ResourceNotFoundException($"No task with id {taskId} found");
         return task;
     }
 
-    public async Task<int> CreateNewTaskAsync(TaskInputModel task) => await taskRepository.CreateNewTaskAsync(task);
+    public async Task<int> CreateNewTaskAsync(TaskInputModel task)
+    {
+        var assignedToUser = task.AssignedToUser;
+        if (assignedToUser != null)
+        {
+            var exists = await _userRepository.DoesUserExistAsync(assignedToUser);
+            if (!exists) throw new BadRequestException($"No user found with name {assignedToUser} found");
+        }
+
+        var statusExist = await _statusRepository.DoesStatusExistAsync(task.StatusId ?? 0);
+        if (!statusExist) throw new BadRequestException($"No status found with id {task.StatusId} found");
+
+        var priorityExist = await _priorityRepository.DoesPriorityExistAsync(task.PriorityId ?? 0);
+        if (!priorityExist) throw new BadRequestException($"No priority found with id {task.PriorityId} found");
+
+        var userEmail = _httpContextAccessor.HttpContext?.User?.FindFirst("email_address")?.Value ?? "";
+
+        return await _taskRepository.CreateNewTaskAsync(task, userEmail);
+    }
 
     public async Task ArchiveTaskByIdAsync(int taskId)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
-        var taskExist = await taskRepository.DoesTaskExistAsync(taskId);
+        var taskExist = await _taskRepository.DoesTaskExistAsync(taskId);
         if (!taskExist)
         {
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
-        await taskRepository.ArchiveTaskByIdAsync(taskId);
+        await _taskRepository.ArchiveTaskByIdAsync(taskId);
     }
 
     public async Task AssignUserToTaskAsync(int taskId, int userId)
@@ -36,19 +71,19 @@ public class TaskService(ITaskRepository taskRepository, IUserRepository userRep
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(userId, 1);
 
-        var taskExist = await taskRepository.DoesTaskExistAsync(taskId);
+        var taskExist = await _taskRepository.DoesTaskExistAsync(taskId);
         if (!taskExist)
         {
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
 
-        var userExist = await userRepository.DoesUserExistAsync(taskId);
+        var userExist = await _userRepository.DoesUserExistAsync(taskId);
         if (!userExist)
         {
             throw new ResourceNotFoundException($"No user with id {userId} found");
         }
 
-        await taskRepository.AssignUserToTaskAsync(taskId, userId);
+        await _taskRepository.AssignUserToTaskAsync(taskId, userId);
     }
 
     public async Task UnassignUserFromTaskAsync(int taskId, int userId)
@@ -56,39 +91,46 @@ public class TaskService(ITaskRepository taskRepository, IUserRepository userRep
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(userId, 1);
 
-        var taskExist = await taskRepository.DoesTaskExistAsync(taskId);
+        var taskExist = await _taskRepository.DoesTaskExistAsync(taskId);
         if (!taskExist)
         {
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
 
-        var userExist = await userRepository.DoesUserExistAsync(taskId);
+        var userExist = await _userRepository.DoesUserExistAsync(taskId);
         if (!userExist)
         {
             throw new ResourceNotFoundException($"No user with id {userId} found");
         }
 
-        await taskRepository.UnassignUserFromTaskAsync(taskId, userId);
+        await _taskRepository.UnassignUserFromTaskAsync(taskId, userId);
     }
 
     public async Task UpdateTaskStatusAsync(int taskId, StatusInputModel inputModel)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
-        var taskExist = await taskRepository.DoesTaskExistAsync(taskId);
+        var taskExist = await _taskRepository.DoesTaskExistAsync(taskId);
         if (!taskExist)
         {
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
+
+        var statusExist = await _statusRepository.DoesStatusExistAsync(inputModel.StatusId);
+        if (!statusExist) throw new BadRequestException($"No status found with id {inputModel.StatusId} found");
+        await _taskRepository.UpdateTaskStatusAsync(taskId, inputModel);
     }
 
     public async Task UpdateTaskPriorityAsync(int taskId, PriorityInputModel inputModel)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(taskId, 1);
-        var taskExist = await taskRepository.DoesTaskExistAsync(taskId);
+        var taskExist = await _taskRepository.DoesTaskExistAsync(taskId);
         if (!taskExist)
         {
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
-        await taskRepository.UpdateTaskPriorityAsync(taskId, inputModel);
+
+        var priorityExist = await _priorityRepository.DoesPriorityExistAsync(inputModel.PriorityId);
+        if (!priorityExist) throw new BadRequestException($"No priority found with id {inputModel.PriorityId} found");
+        await _taskRepository.UpdateTaskPriorityAsync(taskId, inputModel);
     }
 }

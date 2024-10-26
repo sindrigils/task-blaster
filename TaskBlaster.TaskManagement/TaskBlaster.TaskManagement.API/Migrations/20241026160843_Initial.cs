@@ -82,8 +82,9 @@ namespace TaskBlaster.TaskManagement.API.Migrations
                     DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     PriorityId = table.Column<int>(type: "integer", nullable: false),
                     StatusId = table.Column<int>(type: "integer", nullable: false),
-                    AssignedToId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedById = table.Column<int>(type: "integer", nullable: false)
+                    AssignedToId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedById = table.Column<int>(type: "integer", nullable: false),
+                    IsArchived = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {

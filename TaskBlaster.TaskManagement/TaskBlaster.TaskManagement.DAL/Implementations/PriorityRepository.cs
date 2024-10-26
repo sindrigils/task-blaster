@@ -18,4 +18,9 @@ public class PriorityRepository(TaskBlasterDbContext dbContext) : IPriorityRepos
         }).ToListAsync();
     }
 
+    public async Task<bool> DoesPriorityExistAsync(int id)
+    {
+        return await _dbContext.Priorities.AnyAsync(p => p.Id == id);
+    }
+
 }

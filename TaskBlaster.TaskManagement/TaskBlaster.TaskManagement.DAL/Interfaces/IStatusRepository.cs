@@ -5,4 +5,5 @@ namespace TaskBlaster.TaskManagement.DAL.Interfaces;
 public interface IStatusRepository
 {
     Task<IEnumerable<StatusDto>> GetAllStatusesAsync();
+    Task<bool> DoesStatusExistAsync(int id);
 }

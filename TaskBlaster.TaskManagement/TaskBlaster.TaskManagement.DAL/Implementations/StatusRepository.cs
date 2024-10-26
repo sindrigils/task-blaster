@@ -17,4 +17,9 @@ public class StatusRepository(TaskBlasterDbContext dbContext) : IStatusRepositor
             Description = s.Description
         }).ToListAsync();
     }
+    public async Task<bool> DoesStatusExistAsync(int id)
+    {
+        return await _dbContext.Statuses.AnyAsync(s => s.Id == id);
+    }
+
 }

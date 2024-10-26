@@ -3,6 +3,7 @@ using TaskBlaster.TaskManagement.DAL.Data;
 using TaskBlaster.TaskManagement.DAL.Interfaces;
 using TaskBlaster.TaskManagement.Models;
 using TaskBlaster.TaskManagement.Models.Dtos;
+using TaskBlaster.TaskManagement.Models.Exceptions;
 using TaskBlaster.TaskManagement.Models.InputModels;
 
 namespace TaskBlaster.TaskManagement.DAL.Implementations;
@@ -28,7 +29,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<int> CreateNewTaskAsync(TaskInputModel task)
+    public async Task<int> CreateNewTaskAsync(TaskInputModel task, string userEmail)
     {
         int? userId = null;
 
@@ -40,15 +41,23 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
                 userId = user.Id;
             }
         }
+
+        var createdById = (await _dbContext.Users.FirstOrDefaultAsync(u => u.EmailAddress == userEmail))?.Id ?? -1;
+        // this if statement should never be true, since the user will always be created in the db becaue of onTokenValidation
+        // but the complier complains because it can possible be null so i used -1 instead
+        if (createdById == -1) throw new BadRequestException();
+
         var newTask = new Entities.Task
         {
             Title = task.Title,
             Description = task.Description,
-            StatusId = task.StatusId,
-            PriorityId = task.PriorityId,
+            StatusId = task.StatusId ?? 0,
+            PriorityId = task.PriorityId ?? 0,
             DueDate = task.DueDate,
-            AssignedToId = userId
+            AssignedToId = userId,
+            CreatedById = createdById
         };
+
         await _dbContext.AddAsync(newTask);
         await _dbContext.SaveChangesAsync();
         return newTask.Id;
@@ -80,19 +89,19 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             })
             .ToListAsync();
 
-        return new Envelope<TaskDto>
-        {
-            PageNumber = query.PageNumber,
-            PageSize = query.PageSize,
-            MaxCount = tasks.Count,
-            Items = tasks
-        };
+        return new Envelope<TaskDto>(query.PageNumber, query.PageSize, tasks);
     }
 
 
     public async Task<TaskDetailsDto?> GetTaskByIdAsync(int taskId)
     {
-        var task = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == taskId);
+        var task = await _dbContext.Tasks
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .FirstOrDefaultAsync(t => t.Id == taskId);
         if (task == null) return null;
 
         return new TaskDetailsDto
@@ -105,14 +114,14 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             AssignedToUser = task.AssignedTo != null ? task.AssignedTo.FullName : "",
-            Tags = task.TaskTags.Select(tt => tt.Tag.Name).ToList(),
+            Tags = task.TaskTags.Select(tt => tt.Tag.Name).ToList() ?? [],
             Comments = task.Comments.Select(c => new CommentDto
             {
                 Id = c.Id,
                 Author = c.Author,
                 ContentAsMarkdown = c.ContentAsMarkdown,
                 CreatedDate = c.CreatedDate
-            }).ToList()
+            }).ToList() ?? []
         };
     }
 
