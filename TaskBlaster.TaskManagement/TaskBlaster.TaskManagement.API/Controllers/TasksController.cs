@@ -126,7 +126,9 @@ public class TasksController(ITaskService taskService, ICommentService commentSe
     [HttpPost("{taskId}/comments")]
     public async Task<ActionResult> AddCommentToTask(int taskId, [FromBody] CommentInputModel inputModel)
     {
-        await commentService.AddCommentToTaskAsync(taskId, "USER???????", inputModel);
+        var userName = User.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
+
+        await commentService.AddCommentToTaskAsync(taskId, userName, inputModel);
         return Created();
     }
 

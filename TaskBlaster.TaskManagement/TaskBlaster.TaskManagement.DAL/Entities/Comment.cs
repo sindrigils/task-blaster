@@ -7,5 +7,5 @@ public class Comment
     public string ContentAsMarkdown { get; set; } = null!;
     public DateTime CreatedDate { get; set; }
     public int TaskId { get; set; }
-    public Task Task { get; set; } = new Task();
+    public Task Task { get; set; } = null!;
 }

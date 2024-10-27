@@ -52,17 +52,14 @@ public class CommentRepository(TaskBlasterDbContext dbContext) : ICommentReposit
     public async Task RemoveCommentFromTaskAsync(int taskId, int commentId)
     {
         var comment = await _dbContext.Comments.FirstOrDefaultAsync(c => c.Id == commentId && c.TaskId == taskId);
-        if (comment == null)
-        {
-            throw new NotImplementedException();
-        }
+        if (comment == null) return;
+
         _dbContext.Remove(comment);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> DoesCommentExistAsync(int commentId)
+    public async Task<bool> DoesCommentExistAsync(int commentId, int taskId)
     {
-        return await _dbContext.Comments.AnyAsync(c => c.Id == commentId);
-
+        return await _dbContext.Comments.AnyAsync(c => c.Id == commentId && c.TaskId == taskId);
     }
 }

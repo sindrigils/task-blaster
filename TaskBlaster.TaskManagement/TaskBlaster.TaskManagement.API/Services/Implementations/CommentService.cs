@@ -46,7 +46,7 @@ public class CommentService(ICommentRepository commentRepository, ITaskRepositor
             throw new ResourceNotFoundException($"No task with id {taskId} found.");
         }
 
-        var commentExists = await commentRepository.DoesCommentExistAsync(commentId);
+        var commentExists = await commentRepository.DoesCommentExistAsync(commentId, taskId);
         if (!commentExists)
         {
             throw new ResourceNotFoundException($"No comment with id {commentId} found.");

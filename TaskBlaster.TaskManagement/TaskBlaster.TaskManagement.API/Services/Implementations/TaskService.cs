@@ -77,7 +77,7 @@ public class TaskService : ITaskService
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
 
-        var userExist = await _userRepository.DoesUserExistAsync(taskId);
+        var userExist = await _userRepository.DoesUserExistAsync(userId);
         if (!userExist)
         {
             throw new ResourceNotFoundException($"No user with id {userId} found");
@@ -97,7 +97,7 @@ public class TaskService : ITaskService
             throw new ResourceNotFoundException($"No task with id {taskId} found");
         }
 
-        var userExist = await _userRepository.DoesUserExistAsync(taskId);
+        var userExist = await _userRepository.DoesUserExistAsync(userId);
         if (!userExist)
         {
             throw new ResourceNotFoundException($"No user with id {userId} found");

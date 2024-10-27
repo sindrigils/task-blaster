@@ -45,7 +45,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         var createdById = (await _dbContext.Users.FirstOrDefaultAsync(u => u.EmailAddress == userEmail))?.Id ?? -1;
         // this if statement should never be true, since the user will always be created in the db becaue of onTokenValidation
         // but the complier complains because it can possible be null so i used -1 instead
-        if (createdById == -1) throw new BadRequestException();
+        if (createdById == -1) throw new BadRequestException("The authenticated user was not found.");
 
         var newTask = new Entities.Task
         {
@@ -65,12 +65,8 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
     public async Task<Envelope<TaskDto>> GetPaginatedTasksByCriteriaAsync(TaskCriteriaQueryParams query)
     {
-        // Validate the input parameters if necessary
-
-        // Create a base query for tasks
         var taskQuery = _dbContext.Tasks.AsQueryable();
 
-        // Apply search filter if SearchValue is provided
         if (!string.IsNullOrEmpty(query.SearchValue))
         {
             taskQuery = taskQuery.Where(t => t.Title.Contains(query.SearchValue) ||
@@ -121,7 +117,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
                 Author = c.Author,
                 ContentAsMarkdown = c.ContentAsMarkdown,
                 CreatedDate = c.CreatedDate
-            }).ToList() ?? []
+            }).ToList()
         };
     }
 
@@ -175,7 +171,6 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             notification.LastNotificationDate = DateTime.UtcNow;
         }
 
-        // Save changes to the database
         await _dbContext.SaveChangesAsync();
     }
 

@@ -10,5 +10,5 @@ public interface ICommentRepository
     Task AddCommentToTaskAsync(int taskId, string user, CommentInputModel comment);
 
     Task RemoveCommentFromTaskAsync(int taskId, int commentId);
-    Task<bool> DoesCommentExistAsync(int commentId);
+    Task<bool> DoesCommentExistAsync(int commentId, int taskId);
 }

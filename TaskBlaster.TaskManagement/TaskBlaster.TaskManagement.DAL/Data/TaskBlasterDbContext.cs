@@ -72,6 +72,9 @@ public class TaskBlasterDbContext : DbContext
         .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Entities.Task>()
+        .HasQueryFilter(t => !t.IsArchived);
+
+        modelBuilder.Entity<Entities.Task>()
             .Property(t => t.Id)
             .ValueGeneratedOnAdd();
 
