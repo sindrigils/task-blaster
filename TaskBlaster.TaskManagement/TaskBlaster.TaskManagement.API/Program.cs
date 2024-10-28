@@ -69,6 +69,8 @@ builder.Services.AddTransient<ITagService, TagService>();
 builder.Services.AddTransient<ITaskService, TaskService>();
 builder.Services.AddTransient<IUserService, UserService>();
 
+builder.Services.AddHttpClient<INotificationService, NotificationService>();
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -78,11 +80,11 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 

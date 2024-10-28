@@ -16,14 +16,23 @@ public class TaskService : ITaskService
     private readonly IStatusRepository _statusRepository;
     private readonly IPriorityRepository _priorityRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly INotificationService _notificationService;
 
-    public TaskService(ITaskRepository taskRepository, IUserRepository userRepository, IStatusRepository statusRepository, IPriorityRepository priorityRepository, IHttpContextAccessor httpContextAccessor)
+    public TaskService(
+    ITaskRepository taskRepository,
+    IUserRepository userRepository,
+    IStatusRepository statusRepository,
+    IPriorityRepository priorityRepository,
+    IHttpContextAccessor httpContextAccessor,
+    INotificationService notificationService
+    )
     {
         _taskRepository = taskRepository;
         _userRepository = userRepository;
         _statusRepository = statusRepository;
         _priorityRepository = priorityRepository;
         _httpContextAccessor = httpContextAccessor;
+        _notificationService = notificationService;
     }
 
     public async Task<Envelope<TaskDto>> GetPaginatedTasksByCriteriaAsync(TaskCriteriaQueryParams query) => await _taskRepository.GetPaginatedTasksByCriteriaAsync(query);
@@ -84,6 +93,7 @@ public class TaskService : ITaskService
         }
 
         await _taskRepository.AssignUserToTaskAsync(taskId, userId);
+        await _notificationService.SendAssignedNotification(userId, taskId);
     }
 
     public async Task UnassignUserFromTaskAsync(int taskId, int userId)
@@ -104,6 +114,7 @@ public class TaskService : ITaskService
         }
 
         await _taskRepository.UnassignUserFromTaskAsync(taskId, userId);
+        await _notificationService.SendUnassignedNotification(userId, taskId);
     }
 
     public async Task UpdateTaskStatusAsync(int taskId, StatusInputModel inputModel)

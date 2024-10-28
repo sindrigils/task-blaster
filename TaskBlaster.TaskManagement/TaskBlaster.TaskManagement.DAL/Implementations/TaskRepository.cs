@@ -202,5 +202,4 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
     {
         return await GetTaskAsync(taskId) != null;
     }
-
 }
