@@ -6,17 +6,17 @@ on:
       - main
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  dotnet-build-and-test:
+    runs-on: ubuntu-latest # Run on a unbutu VM
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2 # Move the code into the VM
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: '8.0'
+          dotnet-version: '8.0' # install dotnet version 8 on the VM
       
       - name: Restore Dependencies
         run: dotnet restore
@@ -25,3 +25,27 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
         working-directory: TaskBlaster.TaskManagement
+
+  nextjs-build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        working-directory: ./taskblaster-web
+        run: npm install
+
+      - name: Lint Code
+        working-directory: ./taskblaster-web
+        run: npm run lint
+
+      - name: Build Next.js Application
+        working-directory: ./taskblaster-web
+        run: npm run dev
