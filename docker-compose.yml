@@ -82,6 +82,7 @@ networks:
   task-management-network:
     driver: bridge
 
+
 volumes:
   postgres_data:
   postgres_hangfire_data:
