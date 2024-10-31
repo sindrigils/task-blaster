@@ -5,7 +5,7 @@ WORKDIR /src
 # Copy solution file
 COPY ../TaskBlaster.TaskManagement.sln ./
 
-# Copy only the necessary project folders
+# Copy only the necessary project folders (since the API's share these folders we need to copy them in both projects)
 COPY TaskBlaster.TaskManagement.Notifications/ TaskBlaster.TaskManagement.Notifications/
 COPY TaskBlaster.TaskManagement.DAL/ TaskBlaster.TaskManagement.DAL/
 COPY TaskBlaster.TaskManagement.Models/ TaskBlaster.TaskManagement.Models/
@@ -22,9 +22,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Set environment variables and expose port
 ENV ASPNETCORE_URLS=http://0.0.0.0:80
 EXPOSE 80
 
-# Run the application
 ENTRYPOINT ["dotnet", "TaskBlaster.TaskManagement.Notifications.dll"]

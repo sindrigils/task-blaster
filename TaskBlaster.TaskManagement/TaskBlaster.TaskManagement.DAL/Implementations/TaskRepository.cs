@@ -182,17 +182,18 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
     public async Task UpdateTaskNotifications()
     {
+        // so the idea here is, when this function is called it checks if there are any tasks that have DueDate today
+        // and have not set DueDateNotificationSent as true then set it as true and also check if there are any tasks
+        // with due date yesterday which have not set DaysAfterNotificationSent as true then set it as true
         var today = DateTime.UtcNow.Date;
         var yesterday = today.AddDays(-1);
 
-        // Get notifications where the due date is today and DueDateNotificationSent is false
         var dueTodayNotifications = await _dbContext.TaskNotifications
             .Where(tn => tn.Task.DueDate.HasValue &&
                          tn.Task.DueDate.Value.Date == today &&
                          !tn.DueDateNotificationSent)
             .ToListAsync();
 
-        // Get notifications where the due date was yesterday, DueDateNotificationSent is true, and DaysAfterNotificationSent is false
         var dueYesterdayNotifications = await _dbContext.TaskNotifications
             .Where(tn => tn.Task.DueDate.HasValue &&
                          tn.Task.DueDate.Value.Date == yesterday &&
@@ -200,13 +201,11 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
                          !tn.DaysAfterNotificationSent)
             .ToListAsync();
 
-        // Update notifications for tasks due today
         foreach (var notification in dueTodayNotifications)
         {
             notification.DueDateNotificationSent = true;
         }
 
-        // Update notifications for tasks due yesterday
         foreach (var notification in dueYesterdayNotifications)
         {
             notification.DaysAfterNotificationSent = true;

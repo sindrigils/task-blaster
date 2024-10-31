@@ -65,8 +65,8 @@ public class NotificationService : INotificationService
         var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
         _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // var response = await _httpClient.PostAsync("http://localhost:5165/api/notifications/emails/template", content);
-        var response = await _httpClient.PostAsync("http://task-management-notifications-api:80/api/notifications/emails/template", content);
+        // var response = await _httpClient.PostAsync("http://task-management-notifications-api:80/api/notifications/emails/template", content);
+        var response = await _httpClient.PostAsync("http://task-blaster-notifications.azurewebsites.net/api/notifications/emails/template", content);
 
         response.EnsureSuccessStatusCode();
     }

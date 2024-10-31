@@ -33,18 +33,14 @@ builder.Services.AddDbContext<TaskBlasterDbContext>(options =>
 );
 
 
-// Hangfire configuration with PostgreSQL storage
-// var hangfireConnection = builder.Configuration.GetConnectionString("HangFireConnection") ?? "";
-// builder.Services.AddHangfire(config => config.UsePostgreSqlStorage(hangfireConnection));
-// builder.Services.AddHangfireServer();
-
-// https://stackoverflow.com/questions/78518867/how-to-fix-usepostgresqlstorage-is-obsolete-will-be-removed-in-2-0-in-hangfir
+// I got this setup from https://stackoverflow.com/questions/78518867/how-to-fix-usepostgresqlstorage-is-obsolete-will-be-removed-in-2-0-in-hangfir
+// since the setup from the HangFire documentation always gave me a warning, because of using deprecated functions....
 var hangfireConnection = builder.Configuration.GetConnectionString("HangFireConnection") ?? "";
 builder.Services.AddHangfire(config => config
-.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-.UseSimpleAssemblyNameTypeSerializer()
-.UseRecommendedSerializerSettings()
-.UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hangfireConnection)));
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hangfireConnection)));
 builder.Services.AddHangfireServer();
 
 
@@ -80,16 +76,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Add recurring Hangfire job
-// RecurringJob.AddOrUpdate<DueDateReminderJob>(
-//     "due-date-reminder-job",
-//     job => job.ExecuteAsync(),
-//     Cron.MinuteInterval(1));
-
 RecurringJob.AddOrUpdate<DueDateReminderJob>(
     "due-date-reminder-job",
     job => job.ExecuteAsync(),
-    "*/1 * * * *"  // Cron expression for every minute
+    "*/30 * * * *"
 );
 
 app.Run();
