@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  dotnet-build-and-test:
+  dotnet-restore-and-build:
     runs-on: ubuntu-latest # Run on a unbutu VM
 
     steps:
@@ -26,7 +26,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
         working-directory: TaskBlaster.TaskManagement
 
-  nextjs-build-and-test:
+  nextjs-build-and-lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,6 +46,6 @@ jobs:
         working-directory: ./taskblaster-web
         run: npm run lint
 
-      - name: Build Next.js Application
-        working-directory: ./taskblaster-web
-        run: npm run dev
+      - name: Build Next.js App
+        run: npm run build
+        working-directory: taskblaster-web
