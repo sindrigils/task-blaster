@@ -20,6 +20,8 @@ jobs:
       
       - name: Restore Dependencies
         run: dotnet restore
+        working-directory: TaskBlaster.TaskManagement
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
+        working-directory: TaskBlaster.TaskManagement
