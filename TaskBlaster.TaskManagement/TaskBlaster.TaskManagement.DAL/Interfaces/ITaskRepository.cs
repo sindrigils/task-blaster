@@ -24,4 +24,5 @@ public interface ITaskRepository
     Task<IEnumerable<TaskWithNotificationDto>> GetTasksForNotifications();
     Task UpdateTaskNotifications();
     Task<bool> DoesTaskExistAsync(int taskId);
+    Task<bool> IsUserAssigned(int taskId, int userId);
 }

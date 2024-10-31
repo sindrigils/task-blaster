@@ -17,7 +17,7 @@ public class Task
     public User CreatedBy { get; set; } = null!;
     public bool IsArchived { get; set; } = false;
 
-    public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
-    public ICollection<Comment> Comments { get; set; } = null!;
+    public ICollection<TaskTag> TaskTags { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
     public TaskNotification? TaskNotification { get; set; }
 }

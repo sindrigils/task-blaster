@@ -17,11 +17,13 @@ public class UserRepository(TaskBlasterDbContext dbContext) : IUserRepository
         {
             return;
         }
+
         var newUser = new User
         {
             FullName = inputModel.FullName,
             EmailAddress = inputModel.EmailAddress,
-            ProfileImageUrl = inputModel.ProfileImageUrl
+            ProfileImageUrl = inputModel.ProfileImageUrl,
+            CreatedAt = DateTime.UtcNow
         };
         await _dbContext.AddAsync(newUser);
         await _dbContext.SaveChangesAsync();
@@ -41,16 +43,25 @@ public class UserRepository(TaskBlasterDbContext dbContext) : IUserRepository
     public async Task<UserDto?> GetUserByIdAsync(int userId)
     {
         return await _dbContext.Users
-            .Where(u => u.Id == userId)
-            .Select(user => new UserDto
+            .Select(u => new UserDto
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                EmailAddress = user.EmailAddress,
-                ProfileImageUrl = user.ProfileImageUrl
+                Id = u.Id,
+                FullName = u.FullName,
+                EmailAddress = u.EmailAddress,
+                ProfileImageUrl = u.ProfileImageUrl
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userId);
     }
+    public async Task<UserDto?> GetUserByNameAsync(string userName)
+    {
+        return await _dbContext.Users.Where(u => u.FullName == userName).Select(u => new UserDto
+        {
+            Id = u.Id,
+            FullName = u.FullName,
+            EmailAddress = u.EmailAddress,
+        }).FirstOrDefaultAsync();
+    }
+
     public async Task<bool> DoesUserExistAsync(string user)
     {
         return await _dbContext.Users.AnyAsync(u => u.FullName == user);

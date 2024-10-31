@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TaskBlaster.TaskManagement.DAL.Data;
+using TaskBlaster.TaskManagement.DAL.Entities;
 using TaskBlaster.TaskManagement.DAL.Interfaces;
 using TaskBlaster.TaskManagement.Models;
 using TaskBlaster.TaskManagement.Models.Dtos;
 using TaskBlaster.TaskManagement.Models.Exceptions;
 using TaskBlaster.TaskManagement.Models.InputModels;
+using Task = System.Threading.Tasks.Task;
 
 namespace TaskBlaster.TaskManagement.DAL.Implementations;
 
@@ -27,6 +29,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
         task.AssignedToId = userId;
         await _dbContext.SaveChangesAsync();
+        return;
     }
 
     public async Task<int> CreateNewTaskAsync(TaskInputModel task, string userEmail)
@@ -55,11 +58,26 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             PriorityId = task.PriorityId ?? 0,
             DueDate = task.DueDate,
             AssignedToId = userId,
-            CreatedById = createdById
+            CreatedById = createdById,
+            CreatedAt = DateTime.UtcNow
         };
+
 
         await _dbContext.AddAsync(newTask);
         await _dbContext.SaveChangesAsync();
+
+        if (task.DueDate.HasValue)
+        {
+            var notification = new TaskNotification
+            {
+                TaskId = newTask.Id,
+                DueDateNotificationSent = false,
+                DaysAfterNotificationSent = false,
+            };
+            await _dbContext.AddAsync(notification);
+            await _dbContext.SaveChangesAsync();
+        }
+
         return newTask.Id;
     }
 
@@ -69,8 +87,8 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
         if (!string.IsNullOrEmpty(query.SearchValue))
         {
-            taskQuery = taskQuery.Where(t => t.Title.Contains(query.SearchValue) ||
-                                               (t.Description ?? string.Empty).Contains(query.SearchValue));
+            var searchValueLower = query.SearchValue.ToLower();
+            taskQuery = taskQuery.Where(t => EF.Functions.Like(t.Title.ToLower(), $"%{searchValueLower}%"));
         }
 
         // Get all matching tasks
@@ -97,6 +115,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             .Include(t => t.AssignedTo)
             .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+            .Include(t => t.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == taskId);
         if (task == null) return null;
 
@@ -109,8 +128,9 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             Priority = task.Priority.Name,
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
-            AssignedToUser = task.AssignedTo != null ? task.AssignedTo.FullName : "",
-            Tags = task.TaskTags.Select(tt => tt.Tag.Name).ToList() ?? [],
+            CreatedBy = task.CreatedBy.FullName,
+            AssignedToUser = task.AssignedTo?.FullName ?? "",
+            Tags = task.TaskTags.Select(tt => tt.Tag.Name).ToList(),
             Comments = task.Comments.Select(c => new CommentDto
             {
                 Id = c.Id,
@@ -125,11 +145,11 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
     {
         var currentDate = DateTime.UtcNow;
 
+        // filter out the tasks that have sent both DueDateNotification and DaysAfterNotification
         var tasks = await _dbContext.Tasks
             .Include(t => t.TaskNotification)
             .Where(t => t.DueDate <= currentDate &&
-                        t.TaskNotification != null &&
-                        !t.TaskNotification.DueDateNotificationSent)
+                        t.TaskNotification != null && !(t.TaskNotification.DueDateNotificationSent && t.TaskNotification.DaysAfterNotificationSent))
             .Select(t => new TaskWithNotificationDto
             {
                 Id = t.Id,
@@ -139,13 +159,14 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
                 AssignedToUser = t.AssignedTo != null ? t.AssignedTo.FullName : "",
                 Notification = new TaskNotificationDto
                 {
-                    Id = t.TaskNotification.Id,  // This is safe since we filtered out nulls
+                    // This is safe since we filtered out the nulls and since the due date is set then there must be a TaskNotification model in the db
+                    Id = t.TaskNotification!.Id,
                     DueDateNotificationSent = t.TaskNotification.DueDateNotificationSent,
+                    DayAfterNotificationSent = t.TaskNotification.DaysAfterNotificationSent,
                     LastNotificationDate = t.TaskNotification.LastNotificationDate
                 }
             })
             .ToListAsync();
-
         return tasks;
     }
 
@@ -161,18 +182,39 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
     public async Task UpdateTaskNotifications()
     {
-        var notificationsToUpdate = await _dbContext.TaskNotifications
-            .Where(n => !n.DueDateNotificationSent)
+        var today = DateTime.UtcNow.Date;
+        var yesterday = today.AddDays(-1);
+
+        // Get notifications where the due date is today and DueDateNotificationSent is false
+        var dueTodayNotifications = await _dbContext.TaskNotifications
+            .Where(tn => tn.Task.DueDate.HasValue &&
+                         tn.Task.DueDate.Value.Date == today &&
+                         !tn.DueDateNotificationSent)
             .ToListAsync();
 
-        foreach (var notification in notificationsToUpdate)
+        // Get notifications where the due date was yesterday, DueDateNotificationSent is true, and DaysAfterNotificationSent is false
+        var dueYesterdayNotifications = await _dbContext.TaskNotifications
+            .Where(tn => tn.Task.DueDate.HasValue &&
+                         tn.Task.DueDate.Value.Date == yesterday &&
+                         tn.DueDateNotificationSent &&
+                         !tn.DaysAfterNotificationSent)
+            .ToListAsync();
+
+        // Update notifications for tasks due today
+        foreach (var notification in dueTodayNotifications)
         {
             notification.DueDateNotificationSent = true;
-            notification.LastNotificationDate = DateTime.UtcNow;
+        }
+
+        // Update notifications for tasks due yesterday
+        foreach (var notification in dueYesterdayNotifications)
+        {
+            notification.DaysAfterNotificationSent = true;
         }
 
         await _dbContext.SaveChangesAsync();
     }
+
 
 
     public async Task UpdateTaskPriorityAsync(int taskId, PriorityInputModel inputModel)
@@ -180,7 +222,8 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         var task = await GetTaskAsync(taskId);
         if (task == null) return;
 
-        task.PriorityId = inputModel.PriorityId;
+        // now since the priorityId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
+        task.PriorityId = inputModel.PriorityId ?? task.PriorityId;
         await _dbContext.SaveChangesAsync();
     }
 
@@ -189,8 +232,16 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         var task = await GetTaskAsync(taskId);
         if (task == null) return;
 
-        task.StatusId = inputModel.StatusId;
+        // now since the stausId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
+        task.StatusId = inputModel.StatusId ?? task.StatusId;
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsUserAssigned(int taskId, int userId)
+    {
+        var task = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == taskId);
+        // safe to use "!" since i have confirmed that this task exists before calling this function
+        return task!.AssignedToId == userId;
     }
 
     private async Task<Entities.Task?> GetTaskAsync(int taskId)

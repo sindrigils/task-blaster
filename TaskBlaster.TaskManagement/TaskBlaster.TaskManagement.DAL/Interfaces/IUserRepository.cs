@@ -8,6 +8,7 @@ public interface IUserRepository
     Task<IEnumerable<UserDto>> GetAllUsers();
     Task CreateUserIfNotExists(UserInputModel inputModel);
     Task<UserDto?> GetUserByIdAsync(int userId);
+    Task<UserDto?> GetUserByNameAsync(string userName);
     Task<bool> DoesUserExistAsync(string user);
     Task<bool> DoesUserExistAsync(int userId);
 }

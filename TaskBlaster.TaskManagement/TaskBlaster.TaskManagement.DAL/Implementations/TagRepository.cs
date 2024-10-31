@@ -18,6 +18,7 @@ public class TagRepository(TaskBlasterDbContext dbContext) : ITagRepository
             Name = inputModel.Name,
             Description = inputModel.Description
         };
+
         await _dbContext.AddAsync(tag);
         await _dbContext.SaveChangesAsync();
         return tag.Id;

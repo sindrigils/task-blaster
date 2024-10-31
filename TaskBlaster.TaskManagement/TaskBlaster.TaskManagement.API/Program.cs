@@ -29,6 +29,7 @@ builder.Services.AddAuthentication(options =>
 
             var name = context.Principal?.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
             var email = context.Principal?.Claims.FirstOrDefault(c => c.Type == "email_address")?.Value;
+            var profileUrl = context.Principal?.Claims.FirstOrDefault(c => c.Type == "profile_picture")?.Value;
 
             if (email != null && name != null)
             {
@@ -36,9 +37,9 @@ builder.Services.AddAuthentication(options =>
                 {
                     FullName = name,
                     EmailAddress = email,
+                    ProfileImageUrl = profileUrl
                 });
             }
-
         }
     };
 });
@@ -61,6 +62,7 @@ builder.Services.AddTransient<ITagRepository, TagRepository>();
 builder.Services.AddTransient<ITaskRepository, TaskRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 
+builder.Services.AddTransient<IM2MAuthenticationService, M2MAuthenticationService>();
 builder.Services.AddTransient<ICommentService, CommentService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddTransient<IPriorityService, PriorityService>();

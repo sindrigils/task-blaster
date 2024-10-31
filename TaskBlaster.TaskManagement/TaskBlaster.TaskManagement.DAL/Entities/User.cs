@@ -7,6 +7,6 @@ public class User
     public string EmailAddress { get; set; } = null!;
     public string? ProfileImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
-    public ICollection<Task> CreatedTasks { get; set; } = null!;
-    public ICollection<Task> AssignedTasks { get; set; } = null!;
+    public ICollection<Task> CreatedTasks { get; set; } = [];
+    public ICollection<Task> AssignedTasks { get; set; } = [];
 }

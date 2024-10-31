@@ -1,17 +1,18 @@
+using TaskBlaster.TaskManagement.DAL.Interfaces;
 using TaskBlaster.TaskManagement.Models.Dtos;
 using TaskBlaster.TaskManagement.Notifications.Services.Interfaces;
 
 namespace TaskBlaster.TaskManagement.Notifications.Services.Implementations;
 
-public class TaskService : ITaskService
+public class TaskService(ITaskRepository taskRepository) : ITaskService
 {
-    public Task<IEnumerable<TaskWithNotificationDto>> GetTasksForNotifications()
+    public async Task<IEnumerable<TaskWithNotificationDto>> GetTasksForNotifications()
     {
-        throw new NotImplementedException();
+        return await taskRepository.GetTasksForNotifications();
     }
 
-    public Task UpdateTaskNotifications()
+    public async Task UpdateTaskNotifications()
     {
-        throw new NotImplementedException();
+        await taskRepository.UpdateTaskNotifications();
     }
 }

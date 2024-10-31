@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 using TaskBlaster.TaskManagement.Notifications.Models;
 using TaskBlaster.TaskManagement.Notifications.Services.Interfaces;
+using TaskBlaster.TaskManagement.Notifications.Exceptions;
 
 namespace TaskBlaster.TaskManagement.Notifications.Services.Implementations;
 
@@ -12,6 +13,11 @@ public class MailjetService : IMailService
 {
     private readonly MailjetClient _client;
     private readonly IConfiguration _configuration;
+    private readonly string DefaultName = "there";
+    private readonly string DefaultTaskTitle = "No task title";
+    private readonly string DefaultTaskDescription = "No task description";
+    // Now this does not make much sense, since there will always be a due date, but I get a warning
+    private readonly string DefaultDueDate = "No due date";
 
     public MailjetService(IConfiguration configuration)
     {
@@ -36,14 +42,9 @@ public class MailjetService : IMailService
 
         MailjetResponse response = await _client.PostAsync(request);
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine("Email sent successfully!");
-        }
-        else
-        {
-            Console.WriteLine($"Failed to send email. Status: {response.StatusCode}");
-            Console.WriteLine(response.GetErrorMessage());
+            throw new EmailSendingException(response.GetErrorMessage(), response.StatusCode);
         }
     }
 
@@ -52,10 +53,10 @@ public class MailjetService : IMailService
         // Now this is terrible code, but for some reason TryGetValue does not work
         var templateVariables = new Dictionary<string, object>
         {
-            { "name", variables.ContainsKey("name") ? variables["name"]?.ToString() ?? "Default Name" : "Default Name" },
-            { "task_title", variables.ContainsKey("task_title") ? variables["task_title"]?.ToString() ?? "Default Title" : "Default Title" },
-            { "task_description", variables.ContainsKey("task_description") ? variables["task_description"]?.ToString() ?? "Default Description" : "Default Description" },
-            { "due_date", variables.ContainsKey("due_date") ? variables["due_date"]?.ToString() ?? "No Due Date" : "No Due Date" }
+            { "name", variables.ContainsKey("name") ? variables["name"]?.ToString() ?? DefaultName : DefaultName },
+            { "task_title", variables.ContainsKey("task_title") ? variables["task_title"]?.ToString() ?? DefaultTaskTitle : DefaultTaskTitle },
+            { "task_description", variables.ContainsKey("task_description") ? variables["task_description"]?.ToString() ?? DefaultTaskDescription : DefaultTaskDescription },
+            { "due_date", variables.ContainsKey("due_date") ? variables["due_date"]?.ToString() ?? DefaultDueDate : DefaultDueDate }
         };
 
         var request = new MailjetRequest
@@ -74,14 +75,9 @@ public class MailjetService : IMailService
 
         MailjetResponse response = await _client.PostAsync(request);
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine("Templated email sent successfully!");
-        }
-        else
-        {
-            Console.WriteLine($"Failed to send templated email. Status: {response.StatusCode}");
-            Console.WriteLine(response.GetErrorMessage());
+            throw new EmailSendingException(response.GetErrorMessage(), response.StatusCode);
         }
     }
 }
