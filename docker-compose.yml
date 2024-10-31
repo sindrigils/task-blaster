@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
+      POSTGRES_DB: task_management_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - task-management-network
+    ports:
+      - "5432:5432"
+
+  postgres-hangfire:
+    image: postgres:latest
+    container_name: postgres-hangfire-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
+      POSTGRES_DB: hangfire_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_hangfire_data:/var/lib/postgresql/data
+    networks:
+      - task-management-network
+    ports:
+      - "5434:5432" 
+
+
+  task-management-api:
+    build:
+      context: ./TaskBlaster.TaskManagement 
+      dockerfile: TaskBlaster.TaskManagement.API/Dockerfile
+    container_name: task-management-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:80 # Internal communication only
+      POSTGRES_HOST: postgres-db
+      POSTGRES_PORT: 5432
+    depends_on:
+      - postgres
+    networks:
+      - task-management-network
+    ports:
+      - "8080:80"
+
+
+  task-management-notifications-api:
+    build:
+      context: ./TaskBlaster.TaskManagement
+      dockerfile: TaskBlaster.TaskManagement.Notifications/Dockerfile
+    container_name: task-management-notifications-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:80 # Internal communication only
+      POSTGRES_HOST: postgres-db
+      POSTGRES_PORT: 5432
+    depends_on:
+      - postgres
+      - postgres-hangfire
+      - task-management-api
+    networks:
+      - task-management-network
+    ports:
+      - "8081:80"
+
+  web-app:
+    build: ./taskblaster-web
+    container_name: taskblaster-web-app
+    env_file:
+      - ./taskblaster-web/.env.local
+    ports:
+      - 3000:3000
+
+
+networks:
+  task-management-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  postgres_hangfire_data:

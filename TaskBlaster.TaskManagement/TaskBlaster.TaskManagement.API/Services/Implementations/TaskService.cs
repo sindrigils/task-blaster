@@ -92,6 +92,15 @@ public class TaskService : ITaskService
             throw new ResourceNotFoundException($"No user with id {userId} found");
         }
 
+        var task = await _taskRepository.GetTaskByIdAsync(taskId);
+        // safe to use "!" since we already know that this task exists
+        if (task!.AssignedToUser != null)
+        {
+            var user = _userRepository.GetUserByNameAsync(task.AssignedToUser);
+            await _notificationService.SendUnassignedNotification(user.Id, taskId);
+        }
+
+
         await _taskRepository.AssignUserToTaskAsync(taskId, userId);
         await _notificationService.SendAssignedNotification(userId, taskId);
     }
@@ -112,6 +121,9 @@ public class TaskService : ITaskService
         {
             throw new ResourceNotFoundException($"No user with id {userId} found");
         }
+
+        var isUserAssigned = await _taskRepository.IsUserAssigned(taskId, userId);
+        if (!isUserAssigned) throw new BadRequestException($"A user with id {userId} is not assigned to this task.");
 
         await _taskRepository.UnassignUserFromTaskAsync(taskId, userId);
         await _notificationService.SendUnassignedNotification(userId, taskId);

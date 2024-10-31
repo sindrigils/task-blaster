@@ -11,7 +11,7 @@ public class TaskDetailsDto
     public DateTime? DueDate { get; set; }
     public string CreatedBy { get; set; } = "";
     public string? AssignedToUser { get; set; }
-    // TODO MEIKAR ÞETTA SENSE STRING??
+    // Þetta ætti örgl að vera TagDto en þetta er string utaf það er þannig í verkefnalýsingunni
     public List<string> Tags { get; set; } = [];
     public List<CommentDto> Comments { get; set; } = [];
 }
