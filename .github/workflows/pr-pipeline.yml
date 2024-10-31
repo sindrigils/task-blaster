@@ -7,16 +7,16 @@ on:
 
 jobs:
   dotnet-restore-and-build:
-    runs-on: ubuntu-latest # Run on a unbutu VM
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2 # Move the code into the VM
+        uses: actions/checkout@v2
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: '8.0' # install dotnet version 8 on the VM
+          dotnet-version: '8.0'
       
       - name: Restore Dependencies
         run: dotnet restore
