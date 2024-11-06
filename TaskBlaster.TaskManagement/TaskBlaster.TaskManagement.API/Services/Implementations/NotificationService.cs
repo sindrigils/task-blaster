@@ -1,7 +1,5 @@
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 using TaskBlaster.TaskManagement.API.Services.Interfaces;
 using TaskBlaster.TaskManagement.DAL.Interfaces;
@@ -65,8 +63,9 @@ public class NotificationService : INotificationService
         var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
         _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // var response = await _httpClient.PostAsync("http://task-management-notifications-api:80/api/notifications/emails/template", content);
-        var response = await _httpClient.PostAsync("http://task-blaster-notifications.azurewebsites.net/api/notifications/emails/template", content);
+        var response = await _httpClient.PostAsync("http://task-management-notifications-api:80/api/notifications/emails/template", content);
+        // the url to the Notificiations API in Azure
+        // var response = await _httpClient.PostAsync("http://task-blaster-notifications.azurewebsites.net/api/notifications/emails/template", content);
 
         response.EnsureSuccessStatusCode();
     }

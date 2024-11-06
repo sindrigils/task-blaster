@@ -14,7 +14,7 @@ public class UsersController(IUserService userService) : ControllerBase
     /// Gets all registered users
     /// </summary>
     /// <returns>A list of all registered users</returns>
-    [HttpGet("")]
+    [HttpGet("", Name = "GetAllUsers")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
     {
         var users = await userService.GetAllUsersAsync();

@@ -1,54 +1,57 @@
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches:
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
       - main
-  pull_request:
-    branches:
+
+pr:
+  branches:
+    include:
       - main
 
 jobs:
-  dotnet-restore-and-build:
-    runs-on: ubuntu-latest 
+- job: dotnetRestoreAndBuild
+  displayName: '.NET Restore and Build'
+  pool:
+    vmImage: 'ubuntu-latest'
+  
+  steps:
+  - checkout: self
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '8.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+  
+  - script: dotnet restore
+    displayName: 'Restore Dependencies'
+    workingDirectory: 'TaskBlaster.TaskManagement'
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '8.0'
-      
-      - name: Restore Dependencies
-        run: dotnet restore
-        working-directory: TaskBlaster.TaskManagement
+  - script: dotnet build --no-restore --configuration Release
+    displayName: 'Build'
+    workingDirectory: 'TaskBlaster.TaskManagement'
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-        working-directory: TaskBlaster.TaskManagement
+- job: nextjsBuildAndLint
+  displayName: 'Next.js Build and Lint'
+  pool:
+    vmImage: 'ubuntu-latest'
+  
+  steps:
+  - checkout: self
 
-  nextjs-build-and-lint:
-    runs-on: ubuntu-latest
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '18.x'
+  
+  - script: npm install
+    displayName: 'Install Dependencies'
+    workingDirectory: 'taskblaster-web'
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  - script: npm run lint
+    displayName: 'Lint Code'
+    workingDirectory: 'taskblaster-web'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '18'
-
-      - name: Install Dependencies
-        working-directory: ./taskblaster-web
-        run: npm install
-
-      - name: Lint Code
-        working-directory: ./taskblaster-web
-        run: npm run lint
-
-      - name: Build Next.js App
-        run: npm run build
-        working-directory: taskblaster-web
+  - script: npm run build
+    displayName: 'Build Next.js App'
+    workingDirectory: 'taskblaster-web'
