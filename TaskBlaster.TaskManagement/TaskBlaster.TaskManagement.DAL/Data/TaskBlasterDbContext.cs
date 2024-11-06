@@ -71,9 +71,12 @@ public class TaskBlasterDbContext : DbContext
         .HasForeignKey(t => t.AssignedToId)
         .OnDelete(DeleteBehavior.Cascade);
 
+        // Since Tasks that are Archived should not be returned, this is 
+        // a global filter that will filter out all Tasks that are archived
         modelBuilder.Entity<Entities.Task>()
         .HasQueryFilter(t => !t.IsArchived);
 
+        // Generate the PK's
         modelBuilder.Entity<Entities.Task>()
             .Property(t => t.Id)
             .ValueGeneratedOnAdd();

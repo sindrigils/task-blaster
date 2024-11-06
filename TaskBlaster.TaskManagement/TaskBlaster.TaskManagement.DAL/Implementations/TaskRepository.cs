@@ -91,7 +91,6 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
             taskQuery = taskQuery.Where(t => EF.Functions.Like(t.Title.ToLower(), $"%{searchValueLower}%"));
         }
 
-        // Get all matching tasks
         var tasks = await taskQuery
             .Select(t => new TaskDto
             {
@@ -145,11 +144,13 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
     {
         var currentDate = DateTime.UtcNow;
 
-        // filter out the tasks that have sent both DueDateNotification and DaysAfterNotification
+        // Filter out the tasks that have sent both DueDateNotification and DaysAfterNotification
         var tasks = await _dbContext.Tasks
             .Include(t => t.TaskNotification)
             .Where(t => t.DueDate <= currentDate &&
-                        t.TaskNotification != null && !(t.TaskNotification.DueDateNotificationSent && t.TaskNotification.DaysAfterNotificationSent))
+                    t.AssignedTo != null &&
+                    t.TaskNotification != null &&
+                    !(t.TaskNotification.DueDateNotificationSent && t.TaskNotification.DaysAfterNotificationSent))
             .Select(t => new TaskWithNotificationDto
             {
                 Id = t.Id,
@@ -182,7 +183,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
 
     public async Task UpdateTaskNotifications()
     {
-        // so the idea here is, when this function is called it checks if there are any tasks that have DueDate today
+        // So the idea here is, when this function is called it checks if there are any tasks that have DueDate today
         // and have not set DueDateNotificationSent as true then set it as true and also check if there are any tasks
         // with due date yesterday which have not set DaysAfterNotificationSent as true then set it as true
         var today = DateTime.UtcNow.Date;
@@ -221,7 +222,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         var task = await GetTaskAsync(taskId);
         if (task == null) return;
 
-        // now since the priorityId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
+        // Now since the priorityId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
         task.PriorityId = inputModel.PriorityId ?? task.PriorityId;
         await _dbContext.SaveChangesAsync();
     }
@@ -231,7 +232,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
         var task = await GetTaskAsync(taskId);
         if (task == null) return;
 
-        // now since the stausId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
+        // Now since the stausId in the inputmodel is nullable (in order to not get 0 as the default value) I need to use ??
         task.StatusId = inputModel.StatusId ?? task.StatusId;
         await _dbContext.SaveChangesAsync();
     }
@@ -239,7 +240,7 @@ public class TaskRepository(TaskBlasterDbContext dbContext) : ITaskRepository
     public async Task<bool> IsUserAssigned(int taskId, int userId)
     {
         var task = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == taskId);
-        // safe to use "!" since i have confirmed that this task exists before calling this function
+        // Safe to use "!" since i have confirmed that this task exists before calling this function
         return task!.AssignedToId == userId;
     }
 

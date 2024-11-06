@@ -15,7 +15,7 @@ public class TagsController(ITagService tagService) : ControllerBase
     /// Gets all tags
     /// </summary>
     /// <returns>A list of all tags</returns>
-    [HttpGet("")]
+    [HttpGet("", Name = "GetAllTags")]
     public async Task<ActionResult<IEnumerable<TagDto>>> GetAllTags()
     {
         var tags = await tagService.GetAllTagsAsync();
@@ -26,10 +26,10 @@ public class TagsController(ITagService tagService) : ControllerBase
     /// Create a new tag
     /// </summary>
     /// <param name="inputModel">An input model used to populate the new tag</param>
-    [HttpPost("")]
+    [HttpPost("", Name = "CreateNewTag")]
     public async Task<ActionResult> CreateNewTag([FromBody] TagInputModel inputModel)
     {
         var newId = await tagService.CreateNewTagAsync(inputModel);
-        return Created(string.Empty, new { id = newId });
+        return CreatedAtRoute("GetAllTags", null, new { id = newId });
     }
 }

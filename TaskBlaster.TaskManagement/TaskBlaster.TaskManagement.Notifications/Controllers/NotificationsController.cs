@@ -30,20 +30,7 @@ public class NotificationsController(IMailService mailService) : ControllerBase
     [HttpPost("emails/template")]
     public async Task<ActionResult> SendTemplatedEmail([FromBody] TemplateEmailInputModel inputModel)
     {
-        if (string.IsNullOrWhiteSpace(inputModel.To) || inputModel.TemplateId <= 0)
-        {
-            return BadRequest("Recipient and template ID are required.");
-        }
-
-        try
-        {
-            await mailService.SendTemplateEmailAsync(inputModel.To, inputModel.Subject, inputModel.TemplateId, inputModel.Variables);
-            return Ok("Templated email sent successfully.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to send templated email: {ex.Message}");
-            return StatusCode(500, "An error occurred while sending the templated email.");
-        }
+        await mailService.SendTemplateEmailAsync(inputModel.To, inputModel.Subject, inputModel.TemplateId ?? 0, inputModel.Variables);
+        return Ok("Templated email sent successfully.");
     }
 }

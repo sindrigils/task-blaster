@@ -14,7 +14,7 @@ public class PrioritiesController(IPriorityService priorityService) : Controller
     /// Returns a list of all priorities
     /// </summary>
     /// <returns>A list of all priorities</returns>
-    [HttpGet("")]
+    [HttpGet("", Name = "GetAllPriorities")]
     public async Task<ActionResult<IEnumerable<PriorityDto>>> GetAllPriorities()
     {
         var priorities = await priorityService.GetAllPrioritiesAsync();

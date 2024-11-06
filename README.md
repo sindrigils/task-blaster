@@ -1,7 +1,7 @@
 # Database
 In both appsettings, I have set the ConnectionsStings for both Docker and Azure (the current one set is the Docker one)
 
-You probably have a better way then this but this is how I updated the datbase with migrations and ran the population script.
+You probably have a better way then this but this is how I updated the database with migrations and ran the population script.
 
 - Compose up the project with docker compose up --build
 - Go into both appsettings.json and change the where the Host points to in the connection string it should be changed to "Host=localhost"
