@@ -1,4 +1,3 @@
-# azure-pipelines.yml
 trigger:
   branches:
     include:
@@ -13,7 +12,7 @@ jobs:
 - job: dotnetRestoreAndBuild
   displayName: '.NET Restore and Build'
   pool:
-    vmImage: 'ubuntu-latest'
+    name: 'Default'
   
   steps:
   - checkout: self
@@ -35,7 +34,7 @@ jobs:
 - job: nextjsBuildAndLint
   displayName: 'Next.js Build and Lint'
   pool:
-    vmImage: 'ubuntu-latest'
+    name: 'Default'
   
   steps:
   - checkout: self
