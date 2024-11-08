@@ -65,7 +65,7 @@ public class NotificationService : INotificationService
 
         var response = await _httpClient.PostAsync("http://task-management-notifications-api:80/api/notifications/emails/template", content);
         // the url to the Notificiations API in Azure
-        // var response = await _httpClient.PostAsync("http://task-blaster-notifications.azurewebsites.net/api/notifications/emails/template", content);
+        // var response = await _httpClient.PostAsync("https://task-blaster-notifications.azurewebsites.net/api/notifications/emails/template", content);
 
         response.EnsureSuccessStatusCode();
     }
